@@ -13,6 +13,8 @@ args = parser.parse_args()
 
 in_dir = args.input
 out_dir = args.output
+if out_dir[len(out_dir)-1] != '/':
+	out_dir += '/'
 quality = args.quality
 
 def compress(in_path, out_path, quality):
@@ -27,7 +29,7 @@ def compress(in_path, out_path, quality):
 		print(f"ERROR: {str(e)}")
 
 def split(string):
-	return string.replace(' ', '\ ')
+	return string.replace(' ', '\ ').replace('\'', '\\\'').replace(':', '\:') 
 
 def browse_directory(_dir):
 	manga = Path(_dir)
@@ -38,12 +40,13 @@ def browse_directory(_dir):
 					ftype = page.suffix[1:].lower()
 					if ftype == "jpg" or ftype == "jpeg" or ftype == "png" or ftype == "webp":
 						# PIL wants to escape spaces by itself, Path also seems to want to use unescaped paths
-						out_file_unsplit = f"{out_dir}{chapter.name}/{page.with_suffix('.webp').name}"
+						#out_file_unsplit = f"{str(chapter.resolve())}/{page.with_suffix('.webp').name}"	
+						out_file_unsplit = f"{out_dir}{chapter.name}/{page.with_suffix('.webp').name}"	
 						if Path(out_file_unsplit).exists():
 							print(f"skipping {out_file_unsplit}")
 							continue
 						try:
-							out_file = f"{out_dir}{split(chapter.name)}/{split(page.with_suffix('.webp').name)}"	
+							out_file = f"{split(out_dir)}{split(chapter.name)}/{split(page.with_suffix('.webp').name)}"	
 							command = f"./realesrgan-ncnn-vulkan -i {split(str(page.resolve()))} -o {out_file} -s 2 -f webp"
 							print(out_file)
 							output = subprocess.check_output(command, shell=True, universal_newlines=True)
@@ -55,5 +58,10 @@ def browse_directory(_dir):
 		else:
 			print(f"{chapter} is not a directory")
 
+def debug_dir():
+	manga = Path(in_dir)
+	for chapter in manga.iterdir():
+		print(chapter)
 
 browse_directory(in_dir)
+#debug_dir()
